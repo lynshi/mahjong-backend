@@ -10,7 +10,7 @@ from __app__ import datastore
 # pylint: disable=unused-argument
 def main(req: func.HttpRequest) -> func.HttpResponse:
     """Get a room code for the "create room" page."""
-    logger.info('Processing "get_room_code" request.')
+    logger.info('Creating a new room')
 
     code_length = 4
     while True:
