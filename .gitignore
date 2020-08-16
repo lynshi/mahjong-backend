@@ -43,3 +43,6 @@ __pycache__/
 *$py.class
 
 .vscode
+
+.coverage
+.pytest_cache
