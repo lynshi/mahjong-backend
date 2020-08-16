@@ -18,7 +18,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
     try:
-        utils.validate.request(request_json, ['roomCode'])
+        utils.validate.ensure_required_fields_present(request_json, ['roomCode'])
     except ValueError:
         logger.opt(exception=True).error("failed to validate request")
         return func.HttpResponse(
