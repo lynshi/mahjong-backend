@@ -16,8 +16,18 @@ def fixture_client():
         yield mongo.get_connection_client()
 
 
+def get_unique_id():
+    num = 0
+    while True:
+        yield str(num)
+        num += 1
+
+
+unique_id = get_unique_id()
+
+
 def test_create_room(client: pymongo.MongoClient):
-    room_code = 'ABCD'
+    room_code = next(unique_id)
     environment.create_room(room_code)
 
     room = client.mahjong.rooms.find_one({constants.room.ID: room_code})
@@ -35,7 +45,7 @@ def test_create_room(client: pymongo.MongoClient):
 
 # pylint: disable=unused-argument
 def test_create_room_catches_duplicate_key(client: pymongo.MongoClient):
-    room_code = 'this is not a duplicate'
+    room_code = next(unique_id)
     environment.create_room(room_code)
 
     with pytest.raises(environment.RoomCodeExists) as exec_info:
