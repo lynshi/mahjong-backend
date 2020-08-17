@@ -2,6 +2,7 @@
 from __app__.datastore.constants.room import NEXT_PLAYER_ID, PLAYERS
 from unittest.mock import MagicMock, patch
 
+import bson
 import pymongo
 import pytest
 from testcontainers.mongodb import MongoDbContainer
@@ -33,14 +34,13 @@ def test_create_room(client: pymongo.MongoClient):
     room = client.mahjong.rooms.find_one({constants.room.ID: room_code})
     assert room is not None
 
-    document = {
+    expected_room = {
         constants.room.ID: room_code,
         constants.room.PLAYERS: {},
         constants.room.NEXT_PLAYER_ID: 0
     }
-
-    for field, item in document.items():
-        assert item == room[field]
+    
+    assert room == expected_room
 
 
 # pylint: disable=unused-argument
