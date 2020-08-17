@@ -1,0 +1,2 @@
+KEY = 'key'
+NAME = 'name'

@@ -10,7 +10,7 @@ from __app__ import utils
 
 def main(req: func.HttpRequest, connectionInfoJson: str) -> func.HttpResponse:
     """Add a player to a room by creating appropriate entries in Cosmos and SignalR."""
-    logger.info("Adding player")
+    logger.info("Adding a new player")
 
     json_body = utils.request.get_json(req, ('name', 'roomCode'))
     player_name = json_body['name']
