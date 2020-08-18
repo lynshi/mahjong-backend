@@ -5,6 +5,6 @@ from dataclasses import dataclass
 class Player:
     """Represents a player."""
 
-    id: int
+    id: str
     name: str
     signing_key: str

@@ -57,11 +57,11 @@ def test_add_player(client: pymongo.MongoClient):
     room_code = next(unique_id)
     environment.create_room(room_code)
 
-    alice_id = 0
+    alice_id = "0"
     alice_name = "Alice"
     alice_key = "Alice's key"
 
-    bob_id = 1
+    bob_id = "1"
     bob_name = "Bob"
     bob_key = "Bob's key"
 

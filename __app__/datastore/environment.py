@@ -1,4 +1,3 @@
-from __app__.datastore.constants.player import SIGNING_KEY
 import secrets
 
 import pymongo
@@ -50,7 +49,7 @@ def add_player(player_name: str, room_code: str) -> model.Player:
     if room is None:
         raise UnknownRoomCode(room_code)
 
-    player_id = room[constants.room.NEXT_PLAYER_ID]
+    player_id = str(room[constants.room.NEXT_PLAYER_ID])
 
     # For signing JWTs containing player data.
     signing_key = secrets.token_bytes(16).decode("utf-8")
@@ -68,7 +67,3 @@ def add_player(player_name: str, room_code: str) -> model.Player:
     )
 
     return model.Player(player_id, player_name, signing_key)
-
-
-def get_room_key(room_code: str) -> str:
-    return "this is a secret key"

@@ -16,17 +16,16 @@ def main(req: func.HttpRequest, connectionInfoJson: str) -> func.HttpResponse:
     player_name = json_body["name"]
     room_code = json_body["roomCode"]
 
-    player_id = datastore.environment.add_user(player_name, room_code)
-    room_key = datastore.environment.get_room_key(room_code)
+    player = datastore.environment.add_player(player_name, room_code)
 
     response_json = json.loads(connectionInfoJson)
     player_id_json = {
-        "playerId": player_id,
+        "playerId": player.id,
     }
     response_json = {**response_json, **player_id_json}
 
     response_json["playerIdToken"] = jwt.encode(
-        player_id_json, room_key, algorithm="HS256"
+        player_id_json, player.signing_key, algorithm="HS256"
     ).decode("utf-8")
 
     return func.HttpResponse(
