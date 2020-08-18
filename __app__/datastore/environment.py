@@ -1,5 +1,7 @@
 import secrets
 
+import backoff
+from loguru import logger
 import pymongo
 from pymongo import MongoClient
 
@@ -16,6 +18,8 @@ class UnknownRoomCode(Exception):
     """Raise if no room with the code is found in the datastore."""
 
 
+@backoff.on_exception(backoff.constant, pymongo.errors.ConnectionFailure, max_tries=3)
+@logger.catch(reraise=True)
 def create_room(room_code: str):
     """Create a document in the datastore with the specified room code."""
 
@@ -34,6 +38,8 @@ def create_room(room_code: str):
         raise RoomCodeExists(room_code)
 
 
+@backoff.on_exception(backoff.constant, pymongo.errors.ConnectionFailure, max_tries=3)
+@logger.catch(reraise=True)
 def add_player(player_name: str, room_code: str) -> model.Player:
     """Adds a player to an existing room and returns their player ID."""
 
