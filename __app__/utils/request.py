@@ -4,11 +4,15 @@ from typing import Dict, Iterable
 import azure.functions as func
 
 
-class JsonNotPresent(Exception):
+class GetJsonError(Exception):
+    """Raise when there's an error getting JSON from a request."""
+
+
+class JsonNotPresent(GetJsonError):
     """Raise when the request has no JSON."""
 
 
-class MissingRequiredField(Exception):
+class MissingRequiredField(GetJsonError):
     """Raise when the request is missing some required field."""
 
     def __init__(self, field_name: str):
@@ -16,6 +20,8 @@ class MissingRequiredField(Exception):
 
 
 def get_json(req: func.HttpRequest, required_fields: Iterable[str]) -> Dict:
+    """Get the JSON from the request while ensuring all required fields are present."""
+
     def _ensure_required_fields_present(
         json_body: Dict, required_fields: Iterable[str]
     ):

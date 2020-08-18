@@ -19,12 +19,13 @@ def test_create_room():
 
         response = main(request)
 
+    create_room_mock.assert_called_once()
+
+    common.validate_response_fields(response)
     response_json = common.get_json(response)
 
     assert "roomCode" in response_json
     assert len(response_json["roomCode"]) == 4
-
-    create_room_mock.assert_called_once()
 
 
 def test_create_room_ensures_code_is_unique():
@@ -37,9 +38,10 @@ def test_create_room_ensures_code_is_unique():
 
         response = main(request)
 
+    assert create_room_mock.call_count == 2
+
+    common.validate_response_fields(response)
     response_json = common.get_json(response)
 
     assert "roomCode" in response_json
     assert len(response_json["roomCode"]) == 4
-
-    assert create_room_mock.call_count == 2

@@ -1,3 +1,4 @@
+from http import HTTPStatus
 import json
 
 import azure.functions as func
@@ -12,7 +13,15 @@ def main(req: func.HttpRequest, connectionInfoJson: str) -> func.HttpResponse:
     """Add a player to a room by creating appropriate entries in Cosmos and SignalR."""
     logger.info("Adding a new player")
 
-    json_body = utils.request.get_json(req, ("name", "roomCode"))
+    try:
+        json_body = utils.request.get_json(req, ("name", "roomCode"))
+    except utils.request.GetJsonError:
+        logger.opt(exception=True).error('Error getting JSON')
+        return func.HttpResponse(
+            "JSON error",
+            status_code=HTTPStatus.BAD_REQUEST,
+        )
+
     player_name = json_body["name"]
     room_code = json_body["roomCode"]
 
@@ -30,6 +39,6 @@ def main(req: func.HttpRequest, connectionInfoJson: str) -> func.HttpResponse:
 
     return func.HttpResponse(
         json.dumps(response_json),
-        status_code=200,
-        headers={"Content-type": "application/json"},
+        status_code=HTTPStatus.OK,
+        mimetype='application/json',
     )
