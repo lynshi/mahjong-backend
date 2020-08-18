@@ -6,5 +6,5 @@ class Player:
     """Represents a player."""
 
     id: int
-    key: str
     name: str
+    signing_key: str

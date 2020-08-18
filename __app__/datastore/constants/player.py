@@ -1,2 +1,2 @@
-KEY = 'key'
-NAME = 'name'
+NAME = "name"
+SIGNING_KEY = "signingKey"

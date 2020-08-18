@@ -1,8 +1,7 @@
 # pylint: disable=missing-function-docstring
-from __app__.datastore.constants.room import NEXT_PLAYER_ID, PLAYERS
-from unittest.mock import MagicMock, patch
 
-import bson
+from unittest.mock import call, patch
+
 import pymongo
 import pytest
 from testcontainers.mongodb import MongoDbContainer
@@ -10,7 +9,7 @@ from testcontainers.mongodb import MongoDbContainer
 from __app__.datastore import constants, environment, model
 
 
-@pytest.fixture(scope='session', name='client')
+@pytest.fixture(scope="session", name="client")
 def fixture_client():
     with MongoDbContainer(image="mongo:3.6") as mongo:
         environment.COSMOS_CONNECTION_STRING = mongo.get_connection_url()
@@ -37,9 +36,9 @@ def test_create_room(client: pymongo.MongoClient):
     expected_room = {
         constants.room.ID: room_code,
         constants.room.PLAYERS: {},
-        constants.room.NEXT_PLAYER_ID: 0
+        constants.room.NEXT_PLAYER_ID: 0,
     }
-    
+
     assert room == expected_room
 
 
@@ -54,25 +53,40 @@ def test_create_room_catches_duplicate_key(client: pymongo.MongoClient):
     assert str(exec_info.value) == str(environment.RoomCodeExists(room_code))
 
 
-# def test_add_player():
-#     room_code = 'ABCD'
-#     next_player_id = 1
-#     player_name = 'Bob'
-#     player_key = 'a' * 16
-#     with patch('__app__.datastore.environment.MongoClient') as init_mock:
-#         client_mock = MagicMock()
-#         init_mock.return_value = client_mock
+def test_add_player(client: pymongo.MongoClient):
+    room_code = next(unique_id)
+    environment.create_room(room_code)
 
-#         client_mock.mahjong.rooms.find_one_and_update.return_value = {
-#             datastore.constants.room.NEXT_PLAYER_ID: next_player_id
-#         }
+    alice_id = 0
+    alice_name = "Alice"
+    alice_key = "Alice's key"
 
-#         with patch('secrets.token_bytes') as token_mock:
-#             token_mock.return_value = player_key.encode('utf-8')
+    bob_id = 1
+    bob_name = "Bob"
+    bob_key = "Bob's key"
 
-#             assert environment.add_player(player_name, room_code) == model.Player(next_player_id, player_key, player_name)
+    with patch("secrets.token_bytes") as token_mock:
+        token_mock.side_effect = [
+            alice_key.encode("utf-8"),
+            bob_key.encode("utf-8"),
+        ]
 
-#     client_mock.mahjong.rooms.find_one_and_update.assert_called_once_with(
-#         {'_id': room_code},
-#         {'$inc': }
-#     )
+        assert environment.add_player(alice_name, room_code) == model.Player(
+            alice_id, alice_name, alice_key
+        )
+        assert environment.add_player(bob_name, room_code) == model.Player(
+            bob_id, bob_name, bob_key
+        )
+
+    token_mock.assert_has_calls([call(16)] * 2)
+
+    assert client.mahjong.rooms.find_one({"_id": room_code})["players"] == {
+        str(alice_id): {
+            constants.player.NAME: alice_name,
+            constants.player.SIGNING_KEY: alice_key,
+        },
+        str(bob_id): {
+            constants.player.NAME: bob_name,
+            constants.player.SIGNING_KEY: bob_key,
+        },
+    }

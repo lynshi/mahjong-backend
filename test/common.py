@@ -12,4 +12,4 @@ def json_to_bytes(json_body: Dict) -> bytes:
 
 def get_json(response: func.HttpResponse) -> Dict:
     """Get JSON from an HttpResponse."""
-    return json.loads(response.get_body().decode('utf-8'))
+    return json.loads(response.get_body().decode("utf-8"))
