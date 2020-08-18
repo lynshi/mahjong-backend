@@ -29,5 +29,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     room_code_response = {"roomCode": room_code}
 
     return func.HttpResponse(
-        json.dumps(room_code_response), status_code=HTTPStatus.OK, mimetype="application/json"
+        json.dumps(room_code_response),
+        status_code=HTTPStatus.OK,
+        mimetype="application/json",
     )

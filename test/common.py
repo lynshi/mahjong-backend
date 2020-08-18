@@ -11,7 +11,11 @@ def json_to_bytes(json_body: Dict) -> bytes:
     return json_str.encode("utf-8")
 
 
-def validate_response_fields(response: func.HttpResponse, status_code: HTTPStatus = HTTPStatus.OK, mimetype: str = 'application/json'):
+def validate_response_fields(
+    response: func.HttpResponse,
+    status_code: HTTPStatus = HTTPStatus.OK,
+    mimetype: str = "application/json",
+):
     """Validate the response to ensure fields are set correctly."""
 
     assert response.status_code == status_code

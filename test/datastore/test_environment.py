@@ -90,3 +90,12 @@ def test_add_player(client: pymongo.MongoClient):
             constants.player.SIGNING_KEY: bob_key,
         },
     }
+
+
+def test_add_player_raises_UnknownRoomCode(client: pymongo.MongoClient):
+    room_code = next(unique_id)
+
+    alice_name = "Alice"
+
+    with pytest.raises(environment.UnknownRoomCode):
+        environment.add_player(alice_name, room_code)

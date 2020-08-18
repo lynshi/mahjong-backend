@@ -5,9 +5,9 @@ from loguru import logger
 import pymongo
 from pymongo import MongoClient
 
-from . import COSMOS_CONNECTION_STRING
 from . import constants
 from . import model
+from .config import COSMOS_CONNECTION_STRING
 
 
 class RoomCodeExists(Exception):
