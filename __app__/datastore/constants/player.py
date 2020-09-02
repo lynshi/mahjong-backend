@@ -1,2 +1,2 @@
+ID = "id"
 NAME = "name"
-SIGNING_KEY = "signingKey"

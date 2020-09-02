@@ -9,8 +9,8 @@ from __app__ import datastore
 from __app__ import utils
 
 
-def main(req: func.HttpRequest, connectionInfoJson: str) -> func.HttpResponse:
-    """Add a player to a room by creating appropriate entries in Cosmos and SignalR."""
+def main(req: func.HttpRequest) -> func.HttpResponse:
+    """Add a player to a room."""
     logger.info("Adding a new player")
 
     try:
@@ -30,15 +30,7 @@ def main(req: func.HttpRequest, connectionInfoJson: str) -> func.HttpResponse:
             "Invalid room code", status_code=HTTPStatus.BAD_REQUEST,
         )
 
-    response_json = json.loads(connectionInfoJson)
-    player_id_json = {
-        "playerId": player.id,
-    }
-    response_json = {**response_json, **player_id_json}
-
-    response_json["playerIdToken"] = jwt.encode(
-        player_id_json, player.signing_key, algorithm="HS256"
-    ).decode("utf-8")
+    response_json = player.to_dict_with_jwt()
 
     return func.HttpResponse(
         json.dumps(response_json),

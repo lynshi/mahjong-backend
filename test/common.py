@@ -1,6 +1,6 @@
 from http import HTTPStatus
 import json
-from typing import Dict
+from typing import Dict, Optional
 
 import azure.functions as func
 
@@ -14,11 +14,12 @@ def json_to_bytes(json_body: Dict) -> bytes:
 def validate_response_fields(
     response: func.HttpResponse,
     status_code: HTTPStatus = HTTPStatus.OK,
-    mimetype: str = "application/json",
+    mimetype: Optional[str] = "application/json",
 ):
     """Validate the response to ensure fields are set correctly."""
 
     assert response.status_code == status_code
+
     assert response.mimetype == mimetype
 
 

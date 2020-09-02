@@ -1,12 +1,11 @@
-import secrets
-
 import backoff
 from loguru import logger
 import pymongo
 from pymongo import MongoClient
 
+from __app__ import model
+
 from . import constants
-from . import model
 from .config import COSMOS_CONNECTION_STRING
 
 
@@ -18,10 +17,11 @@ class UnknownRoomCode(Exception):
     """Raise if no room with the code is found in the datastore."""
 
 
-@backoff.on_exception(backoff.constant, pymongo.errors.ConnectionFailure, max_tries=3)
 @logger.catch(reraise=True)
-def create_room(room_code: str):
-    """Create a document in the datastore with the specified room code."""
+@backoff.on_exception(backoff.constant, pymongo.errors.ConnectionFailure, max_tries=3)
+@logger.catch(reraise=True, level="WARNING")
+def create_room(room_code: str, signing_key: str):
+    """Creates a document in the datastore with the specified room code."""
 
     client = MongoClient(COSMOS_CONNECTION_STRING)
     rooms = client.mahjong.rooms
@@ -30,16 +30,18 @@ def create_room(room_code: str):
         rooms.insert_one(
             {
                 constants.room.ID: room_code,
-                constants.room.PLAYERS: {},
                 constants.room.NEXT_PLAYER_ID: 0,
+                constants.room.PLAYERS: {},
+                constants.room.SIGNING_KEY: signing_key,
             }
         )
     except pymongo.errors.DuplicateKeyError:
         raise RoomCodeExists(room_code)
 
 
-@backoff.on_exception(backoff.constant, pymongo.errors.ConnectionFailure, max_tries=3)
 @logger.catch(reraise=True)
+@backoff.on_exception(backoff.constant, pymongo.errors.ConnectionFailure, max_tries=3)
+@logger.catch(reraise=True, level="WARNING")
 def add_player(player_name: str, room_code: str) -> model.Player:
     """Adds a player to an existing room and returns their player ID."""
 
@@ -47,7 +49,7 @@ def add_player(player_name: str, room_code: str) -> model.Player:
     rooms = client.mahjong.rooms
 
     room = rooms.find_one_and_update(
-        {"_id": room_code},
+        {constants.room.ID: room_code},
         {"$inc": {constants.room.NEXT_PLAYER_ID: 1}},
         return_document=pymongo.ReturnDocument.BEFORE,
     )
@@ -56,20 +58,31 @@ def add_player(player_name: str, room_code: str) -> model.Player:
         raise UnknownRoomCode(room_code)
 
     player_id = str(room[constants.room.NEXT_PLAYER_ID])
-
-    # For signing JWTs containing player data.
-    signing_key = secrets.token_bytes(16).decode("utf-8")
+    signing_key = room[constants.room.SIGNING_KEY]
 
     rooms.update_one(
-        {"_id": room_code},
+        {constants.room.ID: room_code},
         {
             "$set": {
                 f"{constants.room.PLAYERS}.{player_id}": {
+                    constants.player.ID: player_id,
                     constants.player.NAME: player_name,
-                    constants.player.SIGNING_KEY: signing_key,
                 }
             }
         },
     )
 
-    return model.Player(player_id, player_name, signing_key)
+    return model.Player(player_id, player_name, room_code, signing_key)
+
+
+@logger.catch(reraise=True)
+@backoff.on_exception(backoff.constant, pymongo.errors.ConnectionFailure, max_tries=3)
+@logger.catch(reraise=True, level="WARNING")
+def get_room_signing_key(room_code: str) -> str:
+    """Retrieve the key used to sign JWTs for a particular room."""
+    client = MongoClient(COSMOS_CONNECTION_STRING)
+    rooms = client.mahjong.rooms
+
+    room = rooms.find_one(filter={constants.room.ID: room_code,})
+
+    return room[constants.room.SIGNING_KEY]

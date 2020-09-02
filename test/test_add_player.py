@@ -7,7 +7,7 @@ from unittest.mock import patch
 import azure.functions as func
 
 from __app__.add_player import main
-from __app__ import datastore, utils
+from __app__ import datastore, model, utils
 
 from . import common
 
@@ -15,14 +15,9 @@ from . import common
 def test_add_player():
     player_id = "0"
     player_name = "Alice"
+
     signing_key = "signing key"
-
     room_code = "ABCD"
-
-    connection_info_json = {
-        "url": "https://signalr/?hub=hub",
-        "accessToken": "accessToken",
-    }
 
     token = "token"
 
@@ -37,8 +32,8 @@ def test_add_player():
         with patch(
             "__app__.create_room.datastore.environment.add_player"
         ) as add_player_mock:
-            add_player_mock.return_value = datastore.model.Player(
-                player_id, player_name, signing_key
+            add_player_mock.return_value = model.Player(
+                player_id, player_name, room_code, signing_key
             )
 
             with patch("jwt.encode") as encode_mock:
@@ -48,32 +43,31 @@ def test_add_player():
                     "POST", "/api/add_player", body=json.dumps(json_request).encode()
                 )
 
-                response = main(request, json.dumps(connection_info_json))
+                response = main(request)
 
     get_json_mock.assert_called_once_with(request, ("name", "roomCode",))
     add_player_mock.assert_called_once_with(player_name, room_code)
     encode_mock.assert_called_once_with(
-        {"playerId": player_id,}, signing_key, algorithm="HS256"
+        {"playerId": player_id, "playerName": player_name, "roomCode": room_code},
+        signing_key,
+        algorithm=model.Player.jwt_algorithm,
     )
 
     common.validate_response_fields(response)
     assert common.get_json(response) == {
-        **connection_info_json,
-        **{"playerId": player_id, "playerIdToken": token},
+        "playerId": player_id,
+        "playerName": player_name,
+        "roomCode": room_code,
+        "playerDataToken": token,
     }
 
 
 def test_add_player_catches_GetJsonError():
     player_id = "0"
     player_name = "Alice"
+
     signing_key = "signing key"
-
     room_code = "ABCD"
-
-    connection_info_json = {
-        "url": "https://signalr/?hub=hub",
-        "accessToken": "accessToken",
-    }
 
     token = "token"
 
@@ -88,8 +82,8 @@ def test_add_player_catches_GetJsonError():
         with patch(
             "__app__.create_room.datastore.environment.add_player"
         ) as add_player_mock:
-            add_player_mock.return_value = datastore.model.Player(
-                player_id, player_name, signing_key
+            add_player_mock.return_value = model.Player(
+                player_id, player_name, room_code, signing_key
             )
 
             with patch("jwt.encode") as encode_mock:
@@ -99,7 +93,7 @@ def test_add_player_catches_GetJsonError():
                     "POST", "/api/add_player", body=json.dumps(json_request).encode()
                 )
 
-                response = main(request, json.dumps(connection_info_json))
+                response = main(request)
 
     get_json_mock.assert_called_once_with(request, ("name", "roomCode",))
 
@@ -112,11 +106,6 @@ def test_add_player_catches_UnknownRoomCode():
     player_name = "Alice"
 
     room_code = "ABCD"
-
-    connection_info_json = {
-        "url": "https://signalr/?hub=hub",
-        "accessToken": "accessToken",
-    }
 
     token = "token"
 
@@ -140,7 +129,7 @@ def test_add_player_catches_UnknownRoomCode():
                     "POST", "/api/add_player", body=json.dumps(json_request).encode()
                 )
 
-                response = main(request, json.dumps(connection_info_json))
+                response = main(request)
 
     get_json_mock.assert_called_once_with(request, ("name", "roomCode",))
 

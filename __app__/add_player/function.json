@@ -14,12 +14,6 @@
       "type": "http",
       "direction": "out",
       "name": "$return"
-    },
-    {
-      "type": "signalRConnectionInfo",
-      "direction": "in",
-      "name": "connectionInfoJson",
-      "hubName": "game"
     }
   ]
 }

@@ -15,10 +15,15 @@ def test_create_room():
         "__app__.create_room.datastore.environment.create_room"
     ) as create_room_mock:
         create_room_mock.return_value = None
-        request = func.HttpRequest("GET", "/api/create_room", body=None)
 
-        response = main(request)
+        with patch("secrets.token_bytes") as token_bytes_mock:
+            signing_key = "signing_key"
+            token_bytes_mock.return_value = signing_key.encode()
 
+            request = func.HttpRequest("GET", "/api/create_room", body=None)
+            response = main(request)
+
+    token_bytes_mock.assert_called_once_with(16)
     create_room_mock.assert_called_once()
 
     common.validate_response_fields(response)
@@ -34,10 +39,14 @@ def test_create_room_ensures_code_is_unique():
     ) as create_room_mock:
         create_room_mock.side_effect = [datastore.environment.RoomCodeExists, None]
 
-        request = func.HttpRequest("GET", "/api/create_room", body=None)
+        with patch("secrets.token_bytes") as token_bytes_mock:
+            signing_key = "signing_key"
+            token_bytes_mock.return_value = signing_key.encode()
 
-        response = main(request)
+            request = func.HttpRequest("GET", "/api/create_room", body=None)
+            response = main(request)
 
+    token_bytes_mock.assert_called_once_with(16)
     assert create_room_mock.call_count == 2
 
     common.validate_response_fields(response)
